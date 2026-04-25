@@ -1,70 +1,78 @@
-# CA001 - Block Legacy Authentication
+# CA001 — Block Legacy Authentication
 
 ## Purpose
-Block sign-ins using legacy authentication protocols that do not 
-support modern authentication and MFA.
 
-## Policy Details
-- **Policy name:** CA001-Global-BaseProtection-BlockLegacyAuth-v1.0
-- **State:** Report-only
-- **Target:** All users except break-glass
-- **Resources:** All cloud apps
-- **Condition:** Client apps = Exchange ActiveSync clients + Other clients
-- **Action:** Block access
+Block sign-ins using legacy authentication protocols that do not support modern authentication or MFA.
+
+## Policy Configuration
+
+| Field | Value |
+|-------|-------|
+| Policy name | `CA001-Global-BaseProtection-BlockLegacyAuth-v1.0` |
+| State | Report-only |
+| Users included | All users |
+| Users excluded | `CA-Exclude-BreakGlass` |
+| Target resources | All cloud apps |
+| Conditions | Client apps: Exchange ActiveSync clients + Other clients |
+| Grant control | Block access |
+| Session controls | None |
 
 ## Why This Policy Matters
-Legacy protocols (IMAP, POP, SMTP AUTH, older MAPI clients, basic 
-authentication for Exchange ActiveSync) do not support MFA. Attackers 
-use password spray attacks against these endpoints to bypass MFA. 
-Microsoft published data showing this single control blocks >99% of 
-password spray attempts.
+
+Legacy protocols — IMAP, POP, SMTP AUTH, older MAPI clients, basic authentication for Exchange ActiveSync — do not support multifactor authentication. Attackers use these endpoints for password spray attacks because they can bypass MFA entirely. Microsoft has published data showing that blocking legacy authentication alone defeats the overwhelming majority of password spray attempts in real-world tenants.
+
+This policy is numbered first in the framework because it acts as a fail-safe block: even if other policies (CA002, CA010) require MFA for modern sign-ins, legacy protocols would still represent a bypass without CA001 in place.
 
 ## User Impact
-Minimal for modern environments. Users on:
-- Outlook 2016+ with modern auth enabled: no impact
-- Outlook mobile, Outlook on the web: no impact  
-- Teams, SharePoint Online, OneDrive: no impact
 
-Impact to:
-- Outlook 2010, 2013 (basic auth): blocked
-- Third-party mail clients using IMAP/POP without OAuth: blocked
-- Scripts using SMTP AUTH to send mail: blocked
-- Older phone mail apps using EAS basic auth: blocked
+**No impact for users on modern clients:**
+- Outlook 2016 or newer with modern authentication enabled
+- Outlook on the web, Outlook mobile
+- Microsoft Teams, SharePoint Online, OneDrive
+- Microsoft Authenticator app
+
+**Blocked clients:**
+- Outlook 2010, Outlook 2013 with basic authentication
+- Third-party mail clients using IMAP or POP without OAuth 2.0
+- Scripts or applications using SMTP AUTH for sending mail
+- Older mobile mail apps using Exchange ActiveSync basic auth
 
 ## Exclusions and Rationale
-- **CA-Exclude-BreakGlass:** Emergency access account must not be 
-  dependent on any policy that could lock out recovery.
 
-## Rollout Plan
-1. Deploy in Report-only mode (current state)
-2. Monitor sign-in logs for Report-only: Failure entries over 7 days
-3. Identify affected users/services via the log analysis
-4. Communicate to affected users, provide migration path
-5. After 7 days with no critical impacts, enable policy (State: On)
+| Excluded entity | Rationale |
+|-----------------|-----------|
+| `CA-Exclude-BreakGlass` group | Emergency access account must not depend on any policy that could lock out recovery. Standard break-glass design pattern. |
 
 ## Validation via What If Tool
 
-**Test 1: Legacy auth should be blocked**
-- User: bob.user
+**Test 1 — Legacy auth should be blocked:**
+- User: `bob.user`
 - Cloud app: Office 365
 - Client app: Mobile apps and desktop clients - Other clients
-- Expected: CA001 applies with Block access
-- Actual: ✅ CA001 applied, Report-only: Block access
-- [CAA001-screenshot-test1.png]
+- **Result:** ✅ CA001 applied, Report-only: Block access
+- See `screenshots/CA001-whatif-legacy.png`
 
-**Test 2: Modern auth should NOT be affected**
-- User: bob.user  
+**Test 2 — Modern auth should NOT be affected:**
+- User: `bob.user`
 - Cloud app: Office 365
-- Client app: Browser
-- Expected: CA001 does NOT apply
-- Actual: ✅ 0 policies applied
-- [CAA001-screenshot-test2.png]
+- Client app: Browsers
+- **Result:** ✅ 0 policies applied. CA001 listed under "will not apply" with reason: "Client app"
+- See `screenshots/CA001-whatif-browser.png`
 
-## Testing Notes
-In this lab, legacy auth testing is limited — no Exchange Online 
-licenses to generate real legacy auth traffic. Verified policy 
-configuration correctness via the "What If" tool.
+## Rollout Plan
+
+1. Deploy in Report-only mode (current state)
+2. Monitor sign-in logs for `Conditional Access: Report-only: Failure` entries over 7+ days
+3. Identify any users or service accounts hitting the policy via log analysis
+4. Communicate with affected users and provide migration paths to modern auth
+5. After 7+ days with no critical impacts, change state from Report-only to On
+6. Continue monitoring for 30 days post-enforcement
+
+## Lab Limitations
+
+This lab does not have Exchange Online licenses or real legacy mail clients connected, so live legacy auth traffic cannot be generated. Policy correctness was validated via the What If simulation tool. In a production rollout, the Report-only phase would be backed by real sign-in log evidence.
 
 ## References
-- Microsoft docs: [link]
-- Related: CA002 (Require MFA), CA010 (Admin phishing-resistant MFA)
+
+- [Microsoft Learn: Block legacy authentication](https://learn.microsoft.com/en-us/entra/identity/conditional-access/policy-block-legacy-authentication)
+- Related policies: CA002 (Require MFA for All Users), CA010 (Admin phishing-resistant MFA)
