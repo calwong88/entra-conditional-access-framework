@@ -37,8 +37,8 @@ This convention enables sortable, searchable, auditable policy management as the
 | CA001 | Global | Base Protection | Block legacy authentication | ✅ Built, validated |
 | CA002 | Global | Base Protection | Require MFA for all users | ✅ Built, validated |
 | CA003 | Global | Location-Based | Block high-risk countries | ✅ Built, validated |
-| CA010 | Admins | Auth Strength | Require phishing-resistant MFA | 🔨 In progress |
-| CA011 | Guests | Resource Restriction | Block admin portals | ⏳ Planned |
+| CA010 | Admins | Auth Strength | Require phishing-resistant MFA | ✅ Built, validated |
+| CA011 | Guests | Resource Restriction | Block admin portals | 🔨 In progress |
 | CA012 | Contractors | Device Trust | Require compliant device | ⏳ Planned |
 | CA020 | Global | Risk-Based | Sign-in risk MFA | ⏳ Planned |
 | CA021 | Global | Risk-Based | User risk password change | ⏳ Planned |
